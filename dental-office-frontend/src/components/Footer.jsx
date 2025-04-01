@@ -8,7 +8,7 @@ const Footer = () => {
 
         <div>
           <img className=' w-40' src={assets.logo} alt="" />
-          <p className='w-full md:w-2/3 text-gray-600 leading-6'>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+          <p className='w-full md:w-2/3 text-gray-600 leading-6'>Greeth is your trusted partner for hassle-free dental appointments. We make it easy to connect with qualified dentists, schedule visits, and receive timely reminders—all in one convenient platform. With a focus on efficiency and reliability, Greeth ensures you get the dental care you need without the stress.</p>
         </div>
 
         <div>

@@ -10,13 +10,13 @@ const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // Get all dentists
-router.get('/', authenticateToken, getDentists);
+router.get('/', getDentists);
 
 // Create a new dentist
 router.post('/', authenticateToken, createDentist);
 
 // Get a single dentist by ID
-router.get('/:id', authenticateToken, getDentistById);
+router.get('/:id', getDentistById);
 
 // Update a dentist
 router.put('/:id', authenticateToken, updateDentist);
