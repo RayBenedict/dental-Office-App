@@ -1,13 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
+import { parse, formatISO } from 'date-fns';
+
 // import RelatedDoctors from '../components/RelatedDoctors'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const Appointment = () => {
 
     const { docId } = useParams()
-    const { dentists, currencySymbol } = useContext(AppContext)
+    const { dentists, currencySymbol,  backendUrl, token, getDoctosData, userData } = useContext(AppContext)
     const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
     const [docInfo, setDocInfo] = useState(null)
@@ -15,14 +19,12 @@ const Appointment = () => {
     const [slotIndex, setSlotIndex] = useState(0)
     const [slotTime, setSlotTime] = useState('')
 
+    const navigate = useNavigate()
+
     const fetchDocInfo = async () => {
-      console.log('docId (raw):', docId); // Log the raw docId from useParams
       const numericDocId = parseInt(docId, 10); // Convert docId to a number
-      console.log('docId (numeric):', numericDocId);
-  
+
       const docInfo = dentists.find((doc) => doc.id === numericDocId); // Compare as numbers
-      console.log('Fetched docInfo:', docInfo);
-  
       setDocInfo(docInfo);
   };
 
@@ -56,11 +58,28 @@ const Appointment = () => {
             while (currentDate < endTime) {
                 let formattedTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
+                let day = currentDate.getDate()
+                let month = currentDate.getMonth() + 1
+                let year = currentDate.getFullYear()
+
+                const slotDate = day + "_" + month + "_" + year
+                const slotTime = formattedTime
+                const isSlotAvailable = !docInfo.appointments.some((appointment) => {
+                    const appointmentDate = new Date(appointment.appointment_date);
+                    // Extract the date and time from the appointment
+                    const appointmentSlotDate = `${appointmentDate.getDate()}_${appointmentDate.getMonth() + 1}_${appointmentDate.getFullYear()}`;
+                    const appointmentSlotTime = appointmentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+                    // Check if the slot matches the appointment
+                    return appointmentSlotDate === slotDate && appointmentSlotTime === slotTime;
+                });
                 // Add slot to array
-                timeSlots.push({
-                    datetime: new Date(currentDate),
-                    time: formattedTime
-                })
+                if (isSlotAvailable) {
+                    timeSlots.push({
+                        datetime: new Date(currentDate),
+                        time: formattedTime,
+                    });
+                }
 
                 // Increment current time by 30 minutes
                 currentDate.setMinutes(currentDate.getMinutes() + 30)
@@ -70,15 +89,67 @@ const Appointment = () => {
         }
     }
 
+    
+    const convertToISO = (slotDate, slotTime) => {
+    
+        // Parse the slotDate and slotTime into a Date object
+        const parsedDate = parse(`${slotDate} ${slotTime}`, 'd_M_yyyy h:mm a', new Date());
+    
+        // Convert the Date object to ISO format
+        return formatISO(parsedDate);
+    };
+
     const bookAppointment = async () => {
+
+        if (!token) {
+            toast.warning('Login to book appointment')
+            return navigate('/login')
+        }
+
         const date = docSlots[slotIndex][0].datetime
 
         let day = date.getDate()
         let month = date.getMonth() + 1
         let year = date.getFullYear()
 
-        const slotDate = `${day}_${month}_${year}`
-        console.log(slotDate, slotTime)
+        const slotDate = day + "_" + month + "_" + year
+
+        try {
+            const userId = userData.id;
+
+            const appointment_date = convertToISO(slotDate, slotTime);
+
+            
+
+            const response = await axios.post(
+                `${backendUrl}/api/appointments`,
+                {
+                    dentist_id: docId,
+                    user_id: userId,
+                    appointment_date: appointment_date,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`, 
+                        'Content-Type': 'application/json', 
+                    },
+                }
+            );
+            console.log("res",response);
+            const { data } = response;
+            if (response.status === 201) {
+                toast.success(data.message)
+                getDoctosData()
+                navigate('/my-appointments')
+            } else {
+                toast.error(data.message)
+            }
+
+        } catch (error) {
+            console.log(error)
+            toast.error(error.message)
+        }
+
     }
 
     useEffect(() => {

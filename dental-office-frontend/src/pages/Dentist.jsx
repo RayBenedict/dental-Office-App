@@ -8,12 +8,9 @@ const Dentist = () => {
   const [filterDentist, setFilterDoc] = useState([])
   const [showFilter, setShowFilter] = useState(false)
   const navigate = useNavigate();
-
   const { dentists } = useContext(AppContext)
-  console.log('Dentists from AppContext:', dentists);
 
   const applyFilter = () => {
-    console.log('applyFilter', dentists)
     if (speciality) {
       setFilterDoc(dentists.filter(doc => doc.specialization === speciality))
     } else {
@@ -22,7 +19,7 @@ const Dentist = () => {
   }
 
   useEffect(() => {
-    console.log('useEffect', speciality)
+
     applyFilter()
   }, [dentists, speciality])
 
@@ -42,7 +39,6 @@ const Dentist = () => {
         <div className='w-full grid grid-cols-auto gap-4 gap-y-6'>
           {filterDentist.map((item, index) => (
             <div onClick={() => { navigate(`/appointment/${item.id}`); window.scrollTo(0, 0) }} className='border border-indigo-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500' key={index}>
-              <img className='bg-indigo-50' src={`./src/assets/doc${item.id}.png`} alt="" />
               <div className='p-4'>
                 <div className='flex items-center gap-2 text-sm text-center text-green-500'>
                   <p className='w-2 h-2 bg-green-500 rounded-full'></p><p>Available</p>

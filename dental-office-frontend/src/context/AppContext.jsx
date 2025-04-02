@@ -9,6 +9,8 @@ const AppContextProvider = (props) => {
     const currencySymbol = '₱'
     const backendUrl = import.meta.env.VITE_BACKEND_URL
 
+    console.log('VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
+
     const [dentists, setDoctors] = useState([])
     const [token, setToken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : '')
     const [userData, setUserData] = useState(false)
@@ -20,7 +22,6 @@ const AppContextProvider = (props) => {
         try {
             const response = await axios.get(backendUrl + '/api/dentists');
             const { data } = response;
-    
             if (response.status === 200) {
                 setDoctors(data);
             } else {
@@ -82,7 +83,7 @@ const AppContextProvider = (props) => {
     }, [token])
 
     const value = {
-        dentists,
+        dentists, getDoctosData,
         currencySymbol,
         backendUrl,
         token, setToken,

@@ -6,6 +6,8 @@ const {
   updateDentist,
   deleteDentist,
 } = require('../controllers/dentistsController');
+
+
 const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
 

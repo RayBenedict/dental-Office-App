@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: ./dental-office-backend # Path to the folder containing the Dockerfile
-      dockerfile: Dockerfile           # Name of the Dockerfile
+      context: ./dental-office-backend 
+      dockerfile: Dockerfile           
     ports:
       - "5000:5000"
     environment:

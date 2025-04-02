@@ -3,13 +3,34 @@ const db = require('../config/db');
 // Get all dentists
 exports.getDentists = async (req, res) => {
   try {
+    // Fetch all dentists
     const dentists = await db('dentists').select('*');
-    res.json(dentists);
+
+    // Fetch appointments for each dentist
+    const dentistsWithAppointments = await Promise.all(
+      dentists.map(async (dentist) => {
+        const appointments = await db('appointments')
+          .join('users', 'appointments.user_id', 'users.id') // Join with users table to get user details
+          .select(
+            'appointments.id as appointment_id',
+            'appointments.appointment_date',
+            'appointments.status',
+            'users.name as user_name',
+            'users.email as user_email'
+          )
+          .where({ dentist_id: dentist.id });
+
+        return { ...dentist, appointments };
+      })
+    );
+
+    // Respond with dentists and their appointments
+    res.json(dentistsWithAppointments);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch dentists' });
+    console.error('Error fetching dentists with appointments:', err);
+    res.status(500).json({ error: 'Failed to fetch dentists with appointments' });
   }
 };
-
 // Create a new dentist
 exports.createDentist = async (req, res) => {
   const { name, email, specialization, photo_url } = req.body;

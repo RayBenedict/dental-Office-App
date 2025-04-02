@@ -23,11 +23,11 @@ const Login = () => {
       if (state === 'Sign Up') {
         const response = await axios.post(backendUrl + '/api/users/register', { name, email, password });
         const { data } = response;
-  
-        if (response.status === 200) {
+        if (response.status === 201) {
           localStorage.setItem('token', data.token);
           setToken(data.token);
           toast.success('Account created successfully!');
+          setState('Login');
         } else {
           toast.error(data.message || 'Failed to sign up');
         }
@@ -38,7 +38,6 @@ const Login = () => {
         if (response.status === 200) {
           localStorage.setItem('token', data.token);
           setToken(data.token);
-          console.log("Login successful:", data.token); // Log the token for debugging
           toast.success('Logged in successfully!');
         } else {
           toast.error(data.message || 'Failed to log in');
