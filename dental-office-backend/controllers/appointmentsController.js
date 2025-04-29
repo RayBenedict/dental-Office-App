@@ -52,10 +52,9 @@ exports.getAppointments = async (req, res) => {
 
     const appointments = await query;
 
-    // Check if appointments exist for the given userId
-    if (userId && appointments.length === 0) {
-      return res.status(404).json({ error: 'No appointments found for this user' });
-    }
+    // No need to check for empty array and return 404 here.
+    // If no appointments are found, the 'appointments' variable will be an empty array [],
+    // and sending that back with a 200 OK is the desired behavior.
 
     res.status(200).json(appointments);
   } catch (err) {
@@ -63,6 +62,7 @@ exports.getAppointments = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 // Update an appointment
 exports.updateAppointment = async (req, res) => {
   const { id } = req.params;

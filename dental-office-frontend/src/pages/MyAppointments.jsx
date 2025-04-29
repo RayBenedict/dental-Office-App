@@ -12,19 +12,25 @@ const MyAppointments = () => {
     const navigate = useNavigate()
 
     const [appointments, setAppointments] = useState([])
+    const [loading, setLoading] = useState(true);
 
 
     const getUserAppointments = async () => {
+        setLoading(true);
         try {
-            // Assuming userId is available in the userData context
             const { data } = await axios.get(`${backendUrl}/api/appointments/user/${userData.id}`, {
-                headers: { Authorization: `Bearer ${token}` }, // Use Authorization header for token
+                headers: { Authorization: `Bearer ${token}` },
             });
 
-            setAppointments(data.reverse()); // Reverse the appointments if needed
+            setAppointments(data.reverse()); 
         } catch (error) {
-            console.log(error);
-            toast.error(error.response?.data?.error || error.message);
+            if (error.response && error.response.status === 404) {
+                setAppointments([]);
+            } else {
+                toast.error(error.response?.data?.error || error.message);
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -42,8 +48,6 @@ const MyAppointments = () => {
             if (response.status === 200) {
                 toast.success(data.message);
                 getUserAppointments();
-                window.location.reload();
-                 // Refresh the appointments list
               
             } else {
                 toast.error(data.message || 'Failed to cancel appointment');
@@ -75,31 +79,51 @@ const MyAppointments = () => {
     };
 
     useEffect(() => {
-        if (token) {
+        if (token && userData?.id) {
             getUserAppointments()
+        } else if (!token) {
+            setLoading(false); 
         }
-    }, [token])
+    }, [token, userData?.id])
 
     return (
-        <div>
-            <p className='pb-3 mt-12 font-medium text-zinc-700 border-b'>My appointments</p>
-            <div className=''>
-                {appointments.slice(0, 2).map((item, index) => (
-                    <div key={index} className='grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-2 border-b'>
-                        <div>
-                            <img className='w-32 bg-indigo-50' src={item.image} alt="" />
+        <div className='my-12 px-4 md:px-12'> 
+            <p className='pb-3 font-medium text-zinc-700 border-b'>My appointments</p>
+            <div className='mt-4'> 
+                {loading ? (
+                    <p className='text-center text-zinc-500 mt-8'>Loading appointments...</p>
+                ) : appointments.length > 0 ? (
+                    appointments.map((item, index) => ( 
+                        <div key={index} className='grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_auto_auto] gap-4 items-center py-4 border-b'>
+                            <div>
+                                <div className='w-16 h-16 sm:w-20 sm:h-20 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xl'>
+                                    { item.dentist_name.substring(0, 1)}
+                                </div>
+                            </div>
+                            <div className='text-sm text-zinc-600'>
+                                <p className='text-neutral-800 font-semibold text-base'>{item.dentist_name}</p> 
+                                <p className='text-xs mt-1'><span className='text-sm text-neutral-700 font-medium'>Date & Time:</span> {formatDateTime(item.appointment_date)} </p>
+                                <p className='text-xs mt-1'><span className='text-sm text-neutral-700 font-medium'>Status:</span> <span className={`font-medium ${item.status === 'Cancelled' ? 'text-red-500' : item.status === 'Completed' ? 'text-green-500' : 'text-blue-500'}`}>{item.status || 'Scheduled'}</span></p> {/* Display status */}
+                            </div>
+                            <div className='flex flex-col gap-2 justify-end items-end'> 
+                                {item.status !== 'Cancelled' && item.status !== 'Completed' && (
+                                     <button
+                                        onClick={() => {
+                                            if (window.confirm('Are you sure you want to cancel this appointment?')) {
+                                                cancelAppointment(item.id);
+                                            }
+                                        }}
+                                        className='text-xs sm:text-sm text-red-600 sm:min-w-32 py-1 px-3 border border-red-300 rounded hover:bg-red-600 hover:text-white transition-all duration-300'
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                        <div className='flex-1 text-sm text-zinc-600'>
-                            <p className='text-neutral-800 font-semibold'>{item.dentist_name}</p>
-                            <p>{item.speciality}</p>
-                            <p className='text-xs mt-1'><span className='text-sm text-neutral-700 font-medium'>Date & Time:</span> {formatDateTime(item.appointment_date)} </p>
-                        </div>
-                        <div></div>
-                        <div className='flex flex-col gap-2 justify-end'>
-                            {!item.cancelled && !item.isCompleted && <button onClick={() => cancelAppointment(item.id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300'>Cancel appointment</button>}
-                        </div>
-                    </div>
-                ))}
+                    ))
+                ) : (
+                    <p className='text-center text-zinc-500 mt-8'>You have no appointments scheduled.</p>
+                )}
             </div>
         </div>
     )
